@@ -21,7 +21,8 @@ class Agent:
             self.frontier = [self.start]
             self.explored = []
         elif self.type == "bfs":
-            pass
+            self.frontier = [self.start]
+            self.explored = []
         elif self.type == "ucs":
             pass
         elif self.type == "astar":
@@ -64,7 +65,26 @@ class Agent:
                         self.grid.nodes[node].frontier = True
     #Implement BFS here
     def bfs_step(self):
-        self.failed = True
+        if not self.frontier:
+            self.failed = True
+            print("no path")
+            return
+        current = self.frontier.pop(0)
+        self.grid.nodes[current].checked = True
+        self.grid.nodes[current].frontier = False
+        self.explored.append(current)
+        children = [(current[0]+a[0], current[1]+a[1]) for a in ACTIONS]
+        for node in children:
+            if node in self.explored or node in self.frontier:
+                continue
+            if node[0] in range(self.grid.row_range) and node[1] in range(self.grid.col_range):
+                if not self.grid.nodes[node].puddle:
+                    self.previous[node] = current
+                    if node == self.goal:
+                        self.finished = True
+                    else:
+                        self.frontier.append(node)
+                        self.grid.nodes[node].frontier = True
     #Implement UCS here
     def ucs_step(self):
         self.failed = True
