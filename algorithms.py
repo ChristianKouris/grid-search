@@ -24,9 +24,14 @@ class Agent:
             self.frontier = [self.start]
             self.explored = []
         elif self.type == "ucs":
-            pass
+            self.frontier = []
+            heappush(self.frontier, (0, self.start))
+            self.explored = []
         elif self.type == "astar":
-            pass
+            self.frontier = []
+            h_init = abs(self.goal[0]-self.start[0]) + abs(self.goal[1]-self.start[1])
+            heappush(self.frontier, (h_init, self.start))
+            self.explored = []
     def show_result(self):
         current = self.goal
         while not current == self.start:
@@ -87,7 +92,59 @@ class Agent:
                         self.grid.nodes[node].frontier = True
     #Implement UCS here
     def ucs_step(self):
-        self.failed = True
+        if not self.frontier:
+            self.failed = True
+            print("no path")
+            return
+        cur_tuple = heappop(self.frontier)
+        current = cur_tuple[1]
+        cost = cur_tuple[0]
+        if current in self.explored:
+            return
+        self.grid.nodes[current].checked = True
+        self.grid.nodes[current].frontier = False
+        self.explored.append(current)
+        children = [(current[0]+a[0], current[1]+a[1]) for a in ACTIONS]
+        for node in children:
+            if node in self.explored:
+                continue
+            if node[0] in range(self.grid.row_range) and node[1] in range(self.grid.col_range):
+                if not self.grid.nodes[node].puddle:
+                    self.previous[node] = current
+                    node_cost = cost + self.grid.nodes[node].cost()
+                    if node == self.goal:
+                        self.final_cost = node_cost
+                        self.finished = True
+                    else:
+                        heappush(self.frontier, (node_cost, node))
+                        self.grid.nodes[node].frontier = True
     #Implement Astar here
     def astar_step(self):
-        self.failed = True
+        if not self.frontier:
+            self.failed = True
+            print("no path")
+            return
+        cur_tuple = heappop(self.frontier)
+        current = cur_tuple[1]
+        h_cost = cur_tuple[0]
+        cost = h_cost - abs(self.goal[0]-current[0]) - abs(self.goal[1]-current[1])
+        if current in self.explored:
+            return
+        self.grid.nodes[current].checked = True
+        self.grid.nodes[current].frontier = False
+        self.explored.append(current)
+        children = [(current[0]+a[0], current[1]+a[1]) for a in ACTIONS]
+        for node in children:
+            if node in self.explored:
+                continue
+            if node[0] in range(self.grid.row_range) and node[1] in range(self.grid.col_range):
+                if not self.grid.nodes[node].puddle:
+                    self.previous[node] = current
+                    h = abs(self.goal[0]-node[0]) + abs(self.goal[1]-node[1])
+                    node_cost = cost + self.grid.nodes[node].cost() + h
+                    if node == self.goal:
+                        self.final_cost = node_cost
+                        self.finished = True
+                    else:
+                        heappush(self.frontier, (node_cost, node))
+                        self.grid.nodes[node].frontier = True
